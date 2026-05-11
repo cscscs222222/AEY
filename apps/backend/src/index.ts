@@ -12,6 +12,16 @@ import type {
   SaveMessageRequest
 } from "@social-zeka-ai/types";
 
+type TrendRow = {
+  created_at: string;
+  interest: number;
+  risk: "green" | "yellow" | "red";
+  quality: number;
+  investment: number;
+  tone: number;
+  power: number;
+};
+
 const envSchema = z.object({
   PORT: z.string().default("4000"),
   OPENAI_API_KEY: z.string().optional(),
@@ -71,7 +81,7 @@ const performAnalysis = async (
   request: FastifyRequest,
   reply: FastifyReply,
   payload: AnalyzeMessageRequest
-) => {
+): Promise<AnalysisResponse | undefined> => {
   try {
     return await runAIAnalysis(payload.message, payload.context, {
       apiKey: env.OPENAI_API_KEY ?? "",
@@ -81,7 +91,7 @@ const performAnalysis = async (
   } catch (error) {
     request.log.error({ err: error }, "LLM analysis failed");
     reply.status(502).send({ error: "LLM servisine ulaşılamadı." });
-    return null;
+    return undefined;
   }
 };
 
@@ -219,18 +229,10 @@ fastify.get("/trend-report", async (request, reply) => {
         order by m.created_at desc
         limit 200`;
 
-  const result = await fastify.pg.query<{
-    created_at: string;
-    interest: number;
-    risk: "green" | "yellow" | "red";
-    quality: number;
-    investment: number;
-    tone: number;
-    power: number;
-  }>(query, params);
+  const result = await fastify.pg.query<TrendRow>(query, params);
 
   const trend = buildTrendReport(
-    result.rows.map((row) => ({
+    (result.rows as TrendRow[]).map((row) => ({
       createdAt: row.created_at,
       interest: row.interest,
       risk: row.risk,

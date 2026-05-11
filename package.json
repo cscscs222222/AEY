@@ -11,10 +11,10 @@
     "dev": "npm run dev -w apps/web",
     "dev:backend": "npm run dev -w apps/backend",
     "dev:mobile": "npm run start -w apps/mobile",
-    "lint": "npm run lint -ws --if-present",
+    "lint": "npm run lint --workspaces --if-present",
     "build": "npm run build -w packages/types && npm run build -w packages/utils && npm run build -w packages/ui && npm run build -w packages/ai-engine && npm run build -w apps/backend && npm run build -w apps/web && npm run build -w apps/mobile",
     "postinstall": "npm run build -w packages/types && npm run build -w packages/utils && npm run build -w packages/ui && npm run build -w packages/ai-engine",
-    "test": "npm run test -ws --if-present"
+    "test": "npm run test --workspaces --if-present"
   },
   "repository": {
     "type": "git",
@@ -29,9 +29,11 @@
   },
   "homepage": "https://github.com/cscscs222222/AEY#readme",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@typescript-eslint/eslint-plugin": "^8.59.2",
     "@typescript-eslint/parser": "^8.59.2",
     "eslint": "^10.3.0",
+    "globals": "^17.6.0",
     "typescript": "^5.9.2"
   }
 }
