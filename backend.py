@@ -15,13 +15,24 @@ SYSTEM_PROMPT = (
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 OPENAI_URL = os.getenv("OPENAI_URL", "https://api.openai.com/v1/chat/completions")
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "ALLOWED_ORIGINS",
+        "http://localhost:5173,http://localhost:5500,http://localhost:5000",
+    ).split(",")
+    if origin.strip()
+]
 
 
 @app.after_request
 def add_cors_headers(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
+    origin = request.headers.get("Origin")
+    if origin and origin in ALLOWED_ORIGINS:
+        response.headers["Access-Control-Allow-Origin"] = origin
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
     response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    response.headers["Vary"] = "Origin"
     return response
 
 
@@ -72,8 +83,10 @@ def analyze():
         result = response.json()
         content = result["choices"][0]["message"]["content"]
         parsed = parse_llm_response(content)
-    except Exception:
+    except requests.RequestException:
         return jsonify({"error": "LLM servisine ulaşılamadı."}), 502
+    except (KeyError, IndexError, TypeError, ValueError):
+        return jsonify({"error": "LLM yanıtı beklenenden farklı."}), 502
 
     return jsonify(
         {
@@ -86,4 +99,4 @@ def analyze():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(port=5000)
