@@ -1,0 +1,233 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0f1a;
+  --card: #141a2a;
+  --card-light: #1a2236;
+  --accent: #7c5cff;
+  --accent-soft: rgba(124, 92, 255, 0.2);
+  --text: #e6e9f2;
+  --muted: #9aa3b2;
+  --danger: #ff5d6c;
+  --border: rgba(255, 255, 255, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background: radial-gradient(circle at top, #18203a 0%, var(--bg) 45%);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+textarea {
+  width: 100%;
+  background: #0f1526;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text);
+  padding: 14px;
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 140px;
+  resize: vertical;
+  margin-bottom: 12px;
+}
+
+textarea:focus {
+  outline: 2px solid var(--accent);
+  border-color: transparent;
+}
+
+.sz-app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sz-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.sz-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.sz-header p {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.sz-share {
+  border: 1px solid var(--border);
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.sz-share:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sz-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sz-card {
+  background: linear-gradient(145deg, var(--card), var(--card-light));
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.sz-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sz-card-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sz-card-body p {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.sz-label {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.sz-error {
+  color: var(--danger);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.sz-results {
+  display: grid;
+  gap: 18px;
+}
+
+.sz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.sz-grid span {
+  color: var(--muted);
+  font-size: 12px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.sz-grid strong {
+  font-size: 16px;
+}
+
+.sz-risk-green {
+  color: #4ade80;
+}
+
+.sz-risk-yellow {
+  color: #fbbf24;
+}
+
+.sz-risk-red {
+  color: #f87171;
+}
+
+.sz-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.sz-link {
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.sz-link:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sz-button {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sz-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.sz-primary {
+  background: var(--accent);
+  color: #fff;
+  width: 100%;
+  font-weight: 600;
+}
+
+.sz-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(124, 92, 255, 0.3);
+}
+
+.sz-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.sz-ghost:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+@media (max-width: 900px) {
+  .sz-app {
+    padding: 24px 16px 32px;
+  }
+}
