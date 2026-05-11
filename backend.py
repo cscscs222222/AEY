@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 
@@ -6,10 +7,13 @@ import requests
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = (
-    "Sen bir sosyal zeka ve flört koçusun. Gelen mesajı analiz et ve bana JSON "
-    "formatında şu verileri dön: 'vibe_check', 'secenek_a', 'secenek_b', 'secenek_c'."
+    "Sen bir sosyal zeka ve flört koçusun. Sadece şu JSON formatında yanıt ver: "
+    "{\"vibe_check\": \"...\", \"secenek_a\": \"...\", \"secenek_b\": \"...\", "
+    "\"secenek_c\": \"...\"}."
 )
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
@@ -83,12 +87,14 @@ def analyze():
         result = response.json()
         content = result["choices"][0]["message"]["content"]
         parsed = parse_llm_response(content)
-    except requests.RequestException:
+    except requests.RequestException as error:
+        logger.exception("LLM request failed: %s", error)
         return jsonify({"error": "LLM servisine ulaşılamadı."}), 502
     except (KeyError, IndexError, TypeError):
         return jsonify({"error": "LLM yanıtı beklenenden farklı."}), 502
     except ValueError as error:
-        return jsonify({"error": str(error)}), 502
+        logger.warning("LLM JSON parse failed: %s", error)
+        return jsonify({"error": "LLM yanıtı JSON formatında değil."}), 502
 
     return jsonify(
         {
