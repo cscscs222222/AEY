@@ -85,8 +85,10 @@ def analyze():
         parsed = parse_llm_response(content)
     except requests.RequestException:
         return jsonify({"error": "LLM servisine ulaşılamadı."}), 502
-    except (KeyError, IndexError, TypeError, ValueError):
+    except (KeyError, IndexError, TypeError):
         return jsonify({"error": "LLM yanıtı beklenenden farklı."}), 502
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 502
 
     return jsonify(
         {
