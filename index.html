@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Social Architect</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="header">
+        <div class="logo">AI Social Architect</div>
+        <p class="subtitle">Sosyal dinamik ve flört asistanın</p>
+      </header>
+
+      <main class="main">
+        <section class="input-card">
+          <label class="label" for="message">Mesajı yapıştır</label>
+          <textarea
+            id="message"
+            placeholder="Karşı taraftan gelen mesajı buraya yapıştır..."
+            rows="8"
+          ></textarea>
+          <button id="analyzeBtn" class="primary-btn" type="button">
+            <span class="btn-text">Analiz Et ve Cevap Üret</span>
+            <span class="spinner" aria-hidden="true"></span>
+          </button>
+          <div id="error" class="error"></div>
+        </section>
+
+        <section id="results" class="results hidden">
+          <div class="vibe-card">
+            <h2>Vibe Check (Durum Analizi)</h2>
+            <p id="vibeCheck"></p>
+          </div>
+
+          <div class="options-grid">
+            <div class="option-card">
+              <div class="card-header">
+                <h3>Seçenek A • Fırlama &amp; Eğlenceli</h3>
+                <button class="copy-btn" data-copy="optionA" type="button">Kopyala</button>
+              </div>
+              <p id="optionA"></p>
+            </div>
+
+            <div class="option-card">
+              <div class="card-header">
+                <h3>Seçenek B • Umursamaz &amp; Gizemli</h3>
+                <button class="copy-btn" data-copy="optionB" type="button">Kopyala</button>
+              </div>
+              <p id="optionB"></p>
+            </div>
+
+            <div class="option-card">
+              <div class="card-header">
+                <h3>Seçenek C • Samimi &amp; Etkileyici</h3>
+                <button class="copy-btn" data-copy="optionC" type="button">Kopyala</button>
+              </div>
+              <p id="optionC"></p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">© 2026 AI Social Architect</footer>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
