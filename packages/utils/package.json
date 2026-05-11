@@ -1,0 +1,25 @@
+{
+  "name": "@social-zeka-ai/utils",
+  "version": "0.1.0",
+  "description": "Shared utility helpers for Social Zeka AI",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "test": "echo \"No tests specified\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@social-zeka-ai/types": "file:../types"
+  }
+}
