@@ -51,6 +51,23 @@ body {
   font-size: 15px;
 }
 
+.key-status {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.key-status[data-state="success"] {
+  color: #6ee7b7;
+}
+
+.key-status[data-state="error"] {
+  color: var(--danger);
+}
+
+.key-status[data-state="missing"] {
+  color: #fbbf24;
+}
+
 .main {
   display: flex;
   flex-direction: column;
