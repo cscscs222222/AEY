@@ -9,11 +9,11 @@ const optionC = document.getElementById("optionC");
 const keyStatus = document.getElementById("keyStatus");
 
 const STATUS_LABELS = {
-  configured: "Hazır",
-  missing: "Eksik",
-  success: "Başarılı",
-  error: "Başarısız",
-  pending: "Bilgi bekleniyor",
+  "configured": "Hazır",
+  "missing": "Eksik",
+  "success": "Başarılı",
+  "error": "Başarısız",
+  "pending": "Bilgi bekleniyor",
 };
 
 let currentProvider = "Gemini";
@@ -112,7 +112,7 @@ analyzeBtn.addEventListener("click", async () => {
   setError("");
   setLoading(true);
 
-  let statusApplied = false;
+  let didUpdateStatus = false;
 
   try {
     const response = await fetch("/analyze", {
@@ -124,16 +124,16 @@ analyzeBtn.addEventListener("click", async () => {
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}));
       applyBackendStatus(payload, "error");
-      statusApplied = true;
+      didUpdateStatus = true;
       throw new Error(payload.error || "Bir şeyler ters gitti.");
     }
 
     const data = await response.json();
     applyBackendStatus(data, "success");
-    statusApplied = true;
+    didUpdateStatus = true;
     fillResults(data);
   } catch (error) {
-    if (!statusApplied) {
+    if (!didUpdateStatus) {
       applyBackendStatus(null, "error");
     }
     setError(error.message || "Sunucu hatası oluştu.");
