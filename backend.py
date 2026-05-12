@@ -56,6 +56,30 @@ def build_gemini_url():
     return f"{base_url}/models/{GEMINI_MODEL}:generateContent"
 
 
+def extract_gemini_text(result):
+    if not isinstance(result, dict):
+        raise ValueError("LLM yanıtı beklenenden farklı: JSON nesnesi değil.")
+
+    candidates = result.get("candidates")
+    if not isinstance(candidates, list) or not candidates:
+        raise ValueError("LLM yanıtı beklenenden farklı: 'candidates' boş veya yok.")
+
+    content = candidates[0].get("content") if isinstance(candidates[0], dict) else None
+    if not isinstance(content, dict):
+        raise ValueError("LLM yanıtı beklenenden farklı: 'content' alanı yok.")
+
+    parts = content.get("parts")
+    if not isinstance(parts, list) or not parts:
+        raise ValueError("LLM yanıtı beklenenden farklı: 'parts' boş veya yok.")
+
+    first_part = parts[0] if isinstance(parts[0], dict) else {}
+    text = first_part.get("text")
+    if not text:
+        raise ValueError("LLM yanıtı beklenenden farklı: 'text' alanı yok.")
+
+    return text
+
+
 @app.route("/status", methods=["GET"])
 def status():
     return jsonify(
@@ -105,7 +129,7 @@ def analyze():
         )
         response.raise_for_status()
         result = response.json()
-        content = result["candidates"][0]["content"]["parts"][0]["text"]
+        content = extract_gemini_text(result)
         parsed = parse_llm_response(content)
     except requests.RequestException as error:
         logger.exception("LLM request failed: %s", error)
@@ -119,23 +143,12 @@ def analyze():
             ),
             502,
         )
-    except (KeyError, IndexError, TypeError):
-        return (
-            jsonify(
-                {
-                    "error": "LLM yanıtı beklenenden farklı.",
-                    "provider": PROVIDER_NAME,
-                    "key_status": "error",
-                }
-            ),
-            502,
-        )
     except ValueError as error:
-        logger.warning("LLM JSON parse failed: %s", error)
+        logger.warning("LLM response parsing failed: %s", error)
         return (
             jsonify(
                 {
-                    "error": "LLM yanıtı JSON formatında değil.",
+                    "error": str(error),
                     "provider": PROVIDER_NAME,
                     "key_status": "error",
                 }

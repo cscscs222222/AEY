@@ -62,6 +62,10 @@ body {
   color: var(--success);
 }
 
+.key-status[data-state="configured"] {
+  color: var(--success);
+}
+
 .key-status[data-state="error"] {
   color: var(--danger);
 }
