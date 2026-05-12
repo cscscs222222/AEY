@@ -16,9 +16,17 @@ SYSTEM_PROMPT = (
     "\"secenek_c\": \"...\"}."
 )
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-OPENAI_URL = os.getenv("OPENAI_URL", "https://api.openai.com/v1/chat/completions")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+GEMINI_URL = os.getenv("GEMINI_URL", "https://generativelanguage.googleapis.com/v1beta")
+PROVIDER_NAME = "Gemini"
+GEMINI_RESPONSE_ERRORS = {
+    "response_not_object": "LLM yanıtı beklenenden farklı: JSON nesnesi değil.",
+    "candidates_missing": "LLM yanıtı beklenenden farklı: 'candidates' boş veya yok.",
+    "content_missing": "LLM yanıtı beklenenden farklı: 'content' alanı yok.",
+    "parts_missing": "LLM yanıtı beklenenden farklı: 'parts' boş veya yok.",
+    "text_missing": "LLM yanıtı beklenenden farklı: 'text' alanı yok.",
+}
 ALLOWED_ORIGINS = [
     origin.strip()
     for origin in os.getenv(
@@ -50,13 +58,68 @@ def parse_llm_response(raw_text):
     raise ValueError("LLM yanıtı JSON formatında değil")
 
 
+class GeminiResponseError(ValueError):
+    def __init__(self, code):
+        super().__init__(code)
+        self.code = code
+
+
+def build_gemini_url():
+    base_url = GEMINI_URL.rstrip("/")
+    return f"{base_url}/models/{GEMINI_MODEL}:generateContent"
+
+
+def extract_gemini_text(result):
+    if not isinstance(result, dict):
+        raise GeminiResponseError("response_not_object")
+
+    candidates = result.get("candidates")
+    if not isinstance(candidates, list) or not candidates:
+        raise GeminiResponseError("candidates_missing")
+
+    content = candidates[0].get("content") if isinstance(candidates[0], dict) else None
+    if not isinstance(content, dict):
+        raise GeminiResponseError("content_missing")
+
+    parts = content.get("parts")
+    if not isinstance(parts, list) or not parts:
+        raise GeminiResponseError("parts_missing")
+
+    first_part = parts[0] if isinstance(parts[0], dict) else {}
+    text = first_part.get("text")
+    if not text:
+        raise GeminiResponseError("text_missing")
+
+    return text
+
+
+@app.route("/status", methods=["GET"])
+def status():
+    return jsonify(
+        {
+            "provider": PROVIDER_NAME,
+            "key_configured": bool(GEMINI_API_KEY),
+            "model": GEMINI_MODEL,
+        }
+    )
+
+
 @app.route("/analyze", methods=["POST", "OPTIONS"])
 def analyze():
     if request.method == "OPTIONS":
         return ("", 204)
 
-    if not OPENAI_API_KEY:
-        return jsonify({"error": "OPENAI_API_KEY ortam değişkeni tanımlı değil."}), 500
+    if not GEMINI_API_KEY:
+        return (
+            jsonify(
+                {
+                    "error": "GEMINI_API_KEY ortam değişkeni tanımlı değil.",
+                    "provider": PROVIDER_NAME,
+                    "key_status": "missing",
+                }
+            ),
+            500,
+        )
 
     payload = request.get_json(silent=True) or {}
     message = (payload.get("message") or "").strip()
@@ -64,37 +127,62 @@ def analyze():
         return jsonify({"error": "Mesaj boş olamaz."}), 400
 
     body = {
-        "model": OPENAI_MODEL,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": message},
-        ],
-        "temperature": 0.7,
-        "response_format": {"type": "json_object"},
+        "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
+        "contents": [{"role": "user", "parts": [{"text": message}]}],
+        "generationConfig": {"temperature": 0.7},
     }
 
     try:
         response = requests.post(
-            OPENAI_URL,
-            headers={
-                "Authorization": f"Bearer {OPENAI_API_KEY}",
-                "Content-Type": "application/json",
-            },
+            build_gemini_url(),
+            params={"key": GEMINI_API_KEY},
+            headers={"Content-Type": "application/json"},
             json=body,
             timeout=40,
         )
         response.raise_for_status()
         result = response.json()
-        content = result["choices"][0]["message"]["content"]
+        content = extract_gemini_text(result)
         parsed = parse_llm_response(content)
     except requests.RequestException as error:
         logger.exception("LLM request failed: %s", error)
-        return jsonify({"error": "LLM servisine ulaşılamadı."}), 502
-    except (KeyError, IndexError, TypeError):
-        return jsonify({"error": "LLM yanıtı beklenenden farklı."}), 502
+        return (
+            jsonify(
+                {
+                    "error": "LLM servisine ulaşılamadı.",
+                    "provider": PROVIDER_NAME,
+                    "key_status": "error",
+                }
+            ),
+            502,
+        )
+    except GeminiResponseError as error:
+        logger.warning("LLM response parsing failed: %s", error.code)
+        message = GEMINI_RESPONSE_ERRORS.get(
+            error.code, "LLM yanıtı beklenenden farklı."
+        )
+        return (
+            jsonify(
+                {
+                    "error": message,
+                    "provider": PROVIDER_NAME,
+                    "key_status": "error",
+                }
+            ),
+            502,
+        )
     except ValueError as error:
         logger.warning("LLM JSON parse failed: %s", error)
-        return jsonify({"error": "LLM yanıtı JSON formatında değil."}), 502
+        return (
+            jsonify(
+                {
+                    "error": "LLM yanıtı JSON formatında değil.",
+                    "provider": PROVIDER_NAME,
+                    "key_status": "error",
+                }
+            ),
+            502,
+        )
 
     return jsonify(
         {
@@ -102,6 +190,8 @@ def analyze():
             "secenek_a": parsed.get("secenek_a", ""),
             "secenek_b": parsed.get("secenek_b", ""),
             "secenek_c": parsed.get("secenek_c", ""),
+            "provider": PROVIDER_NAME,
+            "key_status": "success",
         }
     )
 

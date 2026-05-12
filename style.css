@@ -8,6 +8,8 @@
   --text: #e6e9f2;
   --muted: #9aa3b2;
   --danger: #ff5d6c;
+  --success: #6ee7b7;
+  --warning: #fbbf24;
   --border: rgba(255, 255, 255, 0.08);
 }
 
@@ -49,6 +51,27 @@ body {
 .subtitle {
   color: var(--muted);
   font-size: 15px;
+}
+
+.key-status {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.key-status[data-state="success"] {
+  color: var(--success);
+}
+
+.key-status[data-state="configured"] {
+  color: var(--success);
+}
+
+.key-status[data-state="error"] {
+  color: var(--danger);
+}
+
+.key-status[data-state="missing"] {
+  color: var(--warning);
 }
 
 .main {

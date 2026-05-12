@@ -6,6 +6,17 @@ const vibeCheck = document.getElementById("vibeCheck");
 const optionA = document.getElementById("optionA");
 const optionB = document.getElementById("optionB");
 const optionC = document.getElementById("optionC");
+const keyStatus = document.getElementById("keyStatus");
+
+const STATUS_LABELS = {
+  "configured": "Hazır",
+  "missing": "Eksik",
+  "success": "Başarılı",
+  "error": "Başarısız",
+  "pending": "Bilgi bekleniyor",
+};
+
+let currentProvider = "Gemini";
 
 const setLoading = (state) => {
   if (state) {
@@ -19,6 +30,43 @@ const setLoading = (state) => {
 
 const setError = (message) => {
   errorBox.textContent = message;
+};
+
+const setKeyStatus = ({ provider, state }) => {
+  if (!keyStatus) {
+    return;
+  }
+  const label = STATUS_LABELS[state] || STATUS_LABELS["pending"];
+  keyStatus.textContent = `Anahtar: ${provider} • Durum: ${label}`;
+  keyStatus.dataset.state = state;
+};
+
+const applyBackendStatus = (payload, fallbackState) => {
+  if (!payload) {
+    setKeyStatus({ provider: currentProvider, state: fallbackState });
+    return;
+  }
+  currentProvider = payload.provider || currentProvider;
+  const mappedState = payload.key_status || fallbackState;
+  setKeyStatus({ provider: currentProvider, state: mappedState });
+};
+
+const fetchKeyStatus = async () => {
+  if (!keyStatus) {
+    return;
+  }
+  try {
+    const response = await fetch("/status");
+    if (!response.ok) {
+      return;
+    }
+    const data = await response.json();
+    currentProvider = data.provider || currentProvider;
+    const state = data.key_configured ? "configured" : "missing";
+    setKeyStatus({ provider: currentProvider, state });
+  } catch (error) {
+    setKeyStatus({ provider: currentProvider, state: "error" });
+  }
 };
 
 const fillResults = (data) => {
@@ -52,6 +100,8 @@ document.querySelectorAll(".copy-btn").forEach((button) => {
   });
 });
 
+fetchKeyStatus();
+
 analyzeBtn.addEventListener("click", async () => {
   const message = messageInput.value.trim();
   if (!message) {
@@ -62,6 +112,8 @@ analyzeBtn.addEventListener("click", async () => {
   setError("");
   setLoading(true);
 
+  let statusUpdatedFromResponse = false;
+
   try {
     const response = await fetch("/analyze", {
       method: "POST",
@@ -71,12 +123,19 @@ analyzeBtn.addEventListener("click", async () => {
 
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}));
+      applyBackendStatus(payload, "error");
+      statusUpdatedFromResponse = true;
       throw new Error(payload.error || "Bir şeyler ters gitti.");
     }
 
     const data = await response.json();
+    applyBackendStatus(data, "success");
+    statusUpdatedFromResponse = true;
     fillResults(data);
   } catch (error) {
+    if (!statusUpdatedFromResponse) {
+      applyBackendStatus(null, "error");
+    }
     setError(error.message || "Sunucu hatası oluştu.");
   } finally {
     setLoading(false);
