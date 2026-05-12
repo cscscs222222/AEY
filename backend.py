@@ -20,6 +20,13 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 GEMINI_URL = os.getenv("GEMINI_URL", "https://generativelanguage.googleapis.com/v1beta")
 PROVIDER_NAME = "Gemini"
+GEMINI_RESPONSE_ERRORS = {
+    "response_not_object": "LLM yanıtı beklenenden farklı: JSON nesnesi değil.",
+    "candidates_missing": "LLM yanıtı beklenenden farklı: 'candidates' boş veya yok.",
+    "content_missing": "LLM yanıtı beklenenden farklı: 'content' alanı yok.",
+    "parts_missing": "LLM yanıtı beklenenden farklı: 'parts' boş veya yok.",
+    "text_missing": "LLM yanıtı beklenenden farklı: 'text' alanı yok.",
+}
 ALLOWED_ORIGINS = [
     origin.strip()
     for origin in os.getenv(
@@ -51,6 +58,12 @@ def parse_llm_response(raw_text):
     raise ValueError("LLM yanıtı JSON formatında değil")
 
 
+class GeminiResponseError(ValueError):
+    def __init__(self, code):
+        super().__init__(code)
+        self.code = code
+
+
 def build_gemini_url():
     base_url = GEMINI_URL.rstrip("/")
     return f"{base_url}/models/{GEMINI_MODEL}:generateContent"
@@ -58,24 +71,24 @@ def build_gemini_url():
 
 def extract_gemini_text(result):
     if not isinstance(result, dict):
-        raise ValueError("LLM yanıtı beklenenden farklı: JSON nesnesi değil.")
+        raise GeminiResponseError("response_not_object")
 
     candidates = result.get("candidates")
     if not isinstance(candidates, list) or not candidates:
-        raise ValueError("LLM yanıtı beklenenden farklı: 'candidates' boş veya yok.")
+        raise GeminiResponseError("candidates_missing")
 
     content = candidates[0].get("content") if isinstance(candidates[0], dict) else None
     if not isinstance(content, dict):
-        raise ValueError("LLM yanıtı beklenenden farklı: 'content' alanı yok.")
+        raise GeminiResponseError("content_missing")
 
     parts = content.get("parts")
     if not isinstance(parts, list) or not parts:
-        raise ValueError("LLM yanıtı beklenenden farklı: 'parts' boş veya yok.")
+        raise GeminiResponseError("parts_missing")
 
     first_part = parts[0] if isinstance(parts[0], dict) else {}
     text = first_part.get("text")
     if not text:
-        raise ValueError("LLM yanıtı beklenenden farklı: 'text' alanı yok.")
+        raise GeminiResponseError("text_missing")
 
     return text
 
@@ -143,12 +156,27 @@ def analyze():
             ),
             502,
         )
-    except ValueError as error:
-        logger.warning("LLM response parsing failed: %s", error)
+    except GeminiResponseError as error:
+        logger.warning("LLM response parsing failed: %s", error.code)
+        message = GEMINI_RESPONSE_ERRORS.get(
+            error.code, "LLM yanıtı beklenenden farklı."
+        )
         return (
             jsonify(
                 {
-                    "error": str(error),
+                    "error": message,
+                    "provider": PROVIDER_NAME,
+                    "key_status": "error",
+                }
+            ),
+            502,
+        )
+    except ValueError as error:
+        logger.warning("LLM JSON parse failed: %s", error)
+        return (
+            jsonify(
+                {
+                    "error": "LLM yanıtı JSON formatında değil.",
                     "provider": PROVIDER_NAME,
                     "key_status": "error",
                 }

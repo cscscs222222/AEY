@@ -36,7 +36,7 @@ const setKeyStatus = ({ provider, state }) => {
   if (!keyStatus) {
     return;
   }
-  const label = STATUS_LABELS[state] || STATUS_LABELS.pending;
+  const label = STATUS_LABELS[state] || STATUS_LABELS["pending"];
   keyStatus.textContent = `Anahtar: ${provider} • Durum: ${label}`;
   keyStatus.dataset.state = state;
 };
@@ -112,7 +112,7 @@ analyzeBtn.addEventListener("click", async () => {
   setError("");
   setLoading(true);
 
-  let didUpdateStatus = false;
+  let statusUpdatedFromResponse = false;
 
   try {
     const response = await fetch("/analyze", {
@@ -124,16 +124,16 @@ analyzeBtn.addEventListener("click", async () => {
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}));
       applyBackendStatus(payload, "error");
-      didUpdateStatus = true;
+      statusUpdatedFromResponse = true;
       throw new Error(payload.error || "Bir şeyler ters gitti.");
     }
 
     const data = await response.json();
     applyBackendStatus(data, "success");
-    didUpdateStatus = true;
+    statusUpdatedFromResponse = true;
     fillResults(data);
   } catch (error) {
-    if (!didUpdateStatus) {
+    if (!statusUpdatedFromResponse) {
       applyBackendStatus(null, "error");
     }
     setError(error.message || "Sunucu hatası oluştu.");
