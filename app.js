@@ -16,12 +16,6 @@ const STATUS_LABELS = {
   pending: "Bilgi bekleniyor",
 };
 
-const BACKEND_STATUS_MAP = {
-  basarili: "success",
-  basarisiz: "error",
-  eksik: "missing",
-};
-
 let currentProvider = "Gemini";
 
 const setLoading = (state) => {
@@ -53,7 +47,7 @@ const applyBackendStatus = (payload, fallbackState) => {
     return;
   }
   currentProvider = payload.provider || currentProvider;
-  const mappedState = BACKEND_STATUS_MAP[payload.key_status] || fallbackState;
+  const mappedState = payload.key_status || fallbackState;
   setKeyStatus({ provider: currentProvider, state: mappedState });
 };
 

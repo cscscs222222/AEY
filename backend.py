@@ -78,7 +78,7 @@ def analyze():
                 {
                     "error": "GEMINI_API_KEY ortam değişkeni tanımlı değil.",
                     "provider": PROVIDER_NAME,
-                    "key_status": "eksik",
+                    "key_status": "missing",
                 }
             ),
             500,
@@ -114,7 +114,7 @@ def analyze():
                 {
                     "error": "LLM servisine ulaşılamadı.",
                     "provider": PROVIDER_NAME,
-                    "key_status": "basarisiz",
+                    "key_status": "error",
                 }
             ),
             502,
@@ -125,7 +125,7 @@ def analyze():
                 {
                     "error": "LLM yanıtı beklenenden farklı.",
                     "provider": PROVIDER_NAME,
-                    "key_status": "basarisiz",
+                    "key_status": "error",
                 }
             ),
             502,
@@ -137,7 +137,7 @@ def analyze():
                 {
                     "error": "LLM yanıtı JSON formatında değil.",
                     "provider": PROVIDER_NAME,
-                    "key_status": "basarisiz",
+                    "key_status": "error",
                 }
             ),
             502,
@@ -150,7 +150,7 @@ def analyze():
             "secenek_b": parsed.get("secenek_b", ""),
             "secenek_c": parsed.get("secenek_c", ""),
             "provider": PROVIDER_NAME,
-            "key_status": "basarili",
+            "key_status": "success",
         }
     )
 
